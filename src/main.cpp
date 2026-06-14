@@ -25,7 +25,7 @@ void addSeller(OrderCard* seller, int id, float price, int quantity) {
 		sellHead = seller;
 	}
 	else if(sellHead->next == NULL) {
-		if(sellHead->price >= seller->price) {
+		if(sellHead->price > seller->price) {
 			sellHead->prev = seller;
 			seller->next = sellHead;
 			sellHead = seller;
@@ -71,7 +71,7 @@ void addBuyer(OrderCard* buyer, int id, float price, int quantity) {
 		buyHead = buyer;
 	}
 	else if(buyHead->next == NULL) {
-		if(buyHead->price <= buyer->price) {
+		if(buyHead->price < buyer->price) {
 			buyHead->prev = buyer;
 			buyer->next = buyHead;
 			buyHead = buyer;
@@ -107,6 +107,12 @@ void addBuyer(OrderCard* buyer, int id, float price, int quantity) {
 }
 
 void matching_engine() {
+	
+	// Testing
+	// if(buyHead != NULL) cout << "BUY id=" << buyHead->orderID << " price=" << buyHead->price << " qty=" << buyHead->quantity << "\n";
+	// if(sellHead!= NULL) cout << "SELL id=" << sellHead->orderID << " price=" << sellHead->price << " qty=" << sellHead->quantity << "\n";
+	// cout << endl;
+
 	while((buyHead != NULL && sellHead != NULL) && (buyHead->price >= sellHead->price)) {
 		int tradeQuantity = min(buyHead->quantity, sellHead->quantity);
 
@@ -126,51 +132,152 @@ void matching_engine() {
 			if(sellHead) sellHead->prev = NULL;
 			delete(sellTemp);
 		}
+
+		// Testing
+		// cout << "After matching engine"<<endl;
+		// for(OrderCard* t = buyHead; t; t = t->next) cout << "BUY id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
+		// for(OrderCard* t = sellHead; t; t = t->next) cout << "SELL id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
+
 	}
+}
+
+void remove(int orderID, string type) {
+	if(type == "BUY") {
+		OrderCard* head = buyHead;
+		if(head->next == NULL) {
+			buyHead = NULL;
+			delete(head);
+			return;
+		}
+		while(head) {
+			if(head->orderID == orderID) {
+				if(head->prev == NULL) {
+					buyHead = buyHead->next;
+					buyHead->prev = NULL;
+					head->next = NULL;
+					break;
+				}
+				else if(head->next == NULL) {
+					OrderCard* temp = head->prev;
+					temp->next = NULL;
+					head->prev = NULL;
+					break;
+				}
+				else {
+					OrderCard* previous = head->prev;
+					OrderCard* next = head->next;
+					previous->next = next;
+					next->prev = previous;
+					head->prev = NULL;
+					head->next = NULL;
+					break;
+				}
+			}
+			head = head->next;
+		}
+		delete(head);
+	}
+	else {
+		OrderCard* head = sellHead;
+		if(head->next == NULL) {
+			sellHead = NULL;
+			delete(head);
+			return;
+		}
+		while(head) {
+			if(head->orderID == orderID) {
+				if(head->prev == NULL) {
+					sellHead = sellHead->next;
+					sellHead->prev = NULL;
+					head->next = NULL;
+					break;
+				}
+				else if(head->next == NULL) {
+					OrderCard* temp = head->prev;
+					temp->next = NULL;
+					head->prev = NULL;
+					break;
+				}
+				else {
+					OrderCard* previous = head->prev;
+					OrderCard* next = head->next;
+					previous->next = next;
+					next->prev = previous;
+					head->prev = NULL;
+					head->next = NULL;
+					break;
+				}
+			}
+			head = head->next;
+		}
+		delete(head);
+	}
+}
+
+void cancel_order(int orderID) {
+	OrderCard* temp = buyHead;
+	bool flag = false;
+	while(temp) {
+		if(temp->orderID == orderID) {
+			flag = true;
+			remove(orderID, "BUY");
+			break;
+		}
+		temp = temp->next;
+	}
+	if(flag) return;
+	temp = sellHead;
+	while(temp) {
+		if(temp->orderID == orderID) {
+			flag = true;
+			remove(orderID, "SELL");
+			break;
+		}
+		temp = temp->next;
+	}
+	if(flag) return;
+	cout << "Order ID '" <<orderID<< "' does not exist!" <<endl;
+	cout << endl;
 }
 
 int main() {
 	int oid = 1;
-	auto B = [&](float p, int q){ addBuyer(new OrderCard(), oid++, p, q); matching_engine(); };
-	auto S = [&](float p, int q){ addSeller(new OrderCard(), oid++, p, q); matching_engine(); };
+
+	// With matching_engine
+	// auto B = [&](float p, int q){ addBuyer(new OrderCard(), oid++, p, q); matching_engine(); cout << endl;};
+	// auto S = [&](float p, int q){ addSeller(new OrderCard(), oid++, p, q); matching_engine(); cout << endl;};
+
+	// Without matching_engine
+	auto B = [&](float p, int q){ addBuyer(new OrderCard(), oid++, p, q); };
+	auto S = [&](float p, int q){ addSeller(new OrderCard(), oid++, p, q); };
 
 	// Setup initial book
-	B(100, 10); // id1
-	B(98, 5);   // id2
+	B(100, 10);
+	B(98, 5);
+	B(100,8);
+	S(102, 4);
+	S(99, 8);
+	S(99,10);
+	S(98, 15);
+	B(103, 5);
+	B(98, 3);
+	B(95, 4);
 
-	S(102, 4);  // id3 -- no cross, sits in book
+	// Final book values
+	for(OrderCard* t = buyHead; t; t = t->next) cout << "BUY id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
+	for(OrderCard* t = sellHead; t; t = t->next)cout << "SELL id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
 
-	// Test 1: Partial fill of resting buy
-	S(99, 8);   // id4
-	// 99 <= 100 -> matches id1 at price 100
-	// trade qty = min(8,10) = 8
-	// id1 remaining qty = 2
-	// id4 remaining qty = 0 -> fully filled, not added to book
-	// Next check: id4 done, stop.
+	cout << endl;
 
-	// Test 2: Full fill of resting buy, partial spillover, then no-cross stop
-	S(98, 15);  // id5
-	// id1 (qty=2, price=100): 98<=100 -> match, trade=2, id1 removed, id5 remaining=13
-	// next best buy = id2 (price=98): 98<=98 -> match, trade=min(13,5)=5, id2 removed, id5 remaining=8
-	// no more buys -> id5 enters SELL book with qty=8, price=98
+	cancel_order(1);
+	cancel_order(10);
+	cancel_order(8);
 
-	// Test 3: Incoming BUY crosses existing SELL
-	B(103, 5);  // id6
-	// best sell = id5 (price=98, qty=8): 103>=98 -> match, trade=min(5,8)=5
-	// id6 fully filled (remaining=0), id5 remaining=3
-	// stop, id6 not added to book
+	cancel_order(5);
+	cancel_order(11);
+	// cancel_order(4);
 
-	// Test 4: Incoming BUY exactly matches and fully clears a sell, then doesn't cross next
-	B(98, 3);   // id7
-	// best sell = id5 (price=98, qty=3): 98>=98 -> match, trade=3, id5 removed
-	// id7 remaining=0, fully filled, stop
+	for(OrderCard* t = buyHead; t; t = t->next) cout << "BUY id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
+	for(OrderCard* t = sellHead; t; t = t->next)cout << "SELL id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
 
-	// Test 5: No cross at all
-	B(95, 4);   // id8
-	// best sell = id3 (price=102): 95>=102? No -> no match, id8 enters BUY book
-
-	for(OrderCard* t = buyHead; t; t = t->next)
-		cout << "BUY id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
-	for(OrderCard* t = sellHead; t; t = t->next)
-		cout << "SELL id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
 }
