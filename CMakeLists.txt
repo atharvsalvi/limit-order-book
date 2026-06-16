@@ -27,7 +27,11 @@ set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE INTERNAL "Disable benchmark gtest")
 FetchContent_MakeAvailable(benchmark)
 
 # 1. Main Executable Target
-add_executable(quant_run src/main.cpp)
+add_executable(quant_run 
+    src/main.cpp
+    src/orderbook.cpp
+    src/tradelog.cpp
+)
 
 # 2. Benchmark Target
 add_executable(cache_bench benchmarks/cache_benchmark.cpp)
