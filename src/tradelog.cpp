@@ -1,5 +1,6 @@
 #include "tradelog.h"
 #include <iostream>
+#include <algorithm>
 using namespace std;
 
 vector<Trade> tradeLog;

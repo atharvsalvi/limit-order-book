@@ -31,6 +31,7 @@ add_executable(quant_run
     src/main.cpp
     src/orderbook.cpp
     src/tradelog.cpp
+    src/pnltracker.cpp
 )
 
 # 2. Benchmark Target

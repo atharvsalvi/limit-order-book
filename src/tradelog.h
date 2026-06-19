@@ -1,5 +1,6 @@
 #pragma once
-#include<vector>
+#include <vector>
+using namespace std;
 
 class Trade {
 	public:
