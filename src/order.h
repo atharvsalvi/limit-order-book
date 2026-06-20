@@ -9,3 +9,9 @@ class OrderCard {
 		OrderCard* prev;
 		OrderCard* next;
 };
+
+enum Decision {
+	BUY,
+	SELL,
+	HOLD
+};

@@ -11,3 +11,4 @@ void addSeller(OrderCard* seller, int id, double price, int quantity);
 void matching_engine();
 void remove(int orderID, std::string type);
 void cancel_order(int orderID);
+Decision strategy_interface();

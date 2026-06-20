@@ -30,25 +30,27 @@ int main() {
 	B(98, 3);
 	B(95, 4);
 
+	Decision signal = strategy_interface();
+	cout<<endl;
+
 	// Final book values
-	// for(OrderCard* temp = buyHead; temp; temp = temp->next) cout << "BUY id=" << temp->orderID << " price=" << temp->price << " qty=" << temp->quantity << "\n";
-	// for(OrderCard* temp = sellHead; temp; temp = temp->next)cout << "SELL id=" << temp->orderID << " price=" << temp->price << " qty=" << temp->quantity << "\n";
+	for(OrderCard* temp = buyHead; temp; temp = temp->next) cout << "BUY id=" << temp->orderID << " price=" << temp->price << " qty=" << temp->quantity << "\n";
+	for(OrderCard* temp = sellHead; temp; temp = temp->next)cout << "SELL id=" << temp->orderID << " price=" << temp->price << " qty=" << temp->quantity << "\n";
 
-	double last_price = tradeLog.back().price;
-
-	// reverse(tradeLog.begin(), tradeLog.end()); 
 	printTradeLog();
 
-	tracker.processFill();  // or loop processFill over tradeLog
-	tracker.markToMarket(last_price);  // pass last traded price
+	cout << signal <<endl;
 
-	cout << "Net Position: " << tracker.getNetPosition() << endl;
-	cout << "Avg Entry: " << tracker.getAvgEntryPrice() << endl;
-	cout << "Realized P&L: " << tracker.getRealizedPnL() << endl;
-	cout << "Unrealized P&L: " << tracker.getUnrealizedPnL() << endl;
-	cout << "Total P&L: " << tracker.getTotalPnL() << endl;
+	// tracker.processFill();  // or loop processFill over tradeLog
+	// tracker.markToMarket(last_price);  // pass last traded price
 
-	cout << endl;
+	// cout << "Net Position: " << tracker.getNetPosition() << endl;
+	// cout << "Avg Entry: " << tracker.getAvgEntryPrice() << endl;
+	// cout << "Realized P&L: " << tracker.getRealizedPnL() << endl;
+	// cout << "Unrealized P&L: " << tracker.getUnrealizedPnL() << endl;
+	// cout << "Total P&L: " << tracker.getTotalPnL() << endl;
+
+	// cout << endl;
 
 	// cancel_order(1);
 	// cancel_order(10);

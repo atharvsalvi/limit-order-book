@@ -98,6 +98,46 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity) {
 	}
 }
 
+Decision strategy_interface() {
+
+	double ask_price;
+	bool ask = false;
+
+	double bid_price;
+	bool bid = false;
+
+	double last_trade_price;
+	bool last_trade = false;
+
+	Decision signal = HOLD;
+
+	if(tradeLog.size() != 0) {
+		last_trade = true;
+		last_trade_price = tradeLog.back().price;
+	}
+
+	if(sellHead) {
+		ask = true;
+		ask_price = sellHead->price;
+	}
+	if(buyHead) {
+		bid = true;
+		bid_price = buyHead->price;
+	}
+
+	if(ask && bid) {
+		double mid = (ask_price + bid_price)/2;
+		if(!last_trade) signal = HOLD;
+		else {
+			if(mid == last_trade_price) signal = HOLD;
+			else if(mid > last_trade_price) signal = BUY;
+			else signal = SELL;
+		}
+	}
+	return signal;
+
+}
+
 void matching_engine() {
 	
 	// Testing
@@ -105,12 +145,13 @@ void matching_engine() {
 	// if(sellHead!= NULL) cout << "SELL id=" << sellHead->orderID << " price=" << sellHead->price << " qty=" << sellHead->quantity << "\n";
 	// cout << endl;
 
-	while((buyHead != NULL && sellHead != NULL) && (buyHead->price >= sellHead->price)) {
+	while((buyHead && sellHead) && (buyHead->price >= sellHead->price)) {
 		int tradeQuantity = min(buyHead->quantity, sellHead->quantity);
 
 		buyHead->quantity -= tradeQuantity;
 		sellHead->quantity -= tradeQuantity;
 
+		cout << buyHead->arriveTime << " " << sellHead->arriveTime<<endl;
 		if(buyHead->arriveTime > sellHead->arriveTime) tradeLog.push_back({sellHead->price, 'B', tradeQuantity, t});
 		else tradeLog.push_back({buyHead->price, 'S', tradeQuantity, t});
 
@@ -234,3 +275,4 @@ void cancel_order(int orderID) {
 	cout << "Order ID '" <<orderID<< "' does not exist!" <<endl;
 	cout << endl;
 }
+
