@@ -4,10 +4,13 @@
 #include <algorithm>
 using namespace std;
 
+size_t last_processed = 0;
 PnLTracker tracker;
 
 void PnLTracker::processFill() {
-    for(auto it : tradeLog) {
+    for(size_t i = last_processed; i<tradeLog.size(); i++) {
+
+        auto it = tradeLog[i];
 
         if (it.side == 'B') {
             if (net_position >= 0) {
@@ -55,6 +58,7 @@ void PnLTracker::processFill() {
             net_position -= it.quantity;
         }
     }
+    last_processed = tradeLog.size();
 }
 
 void PnLTracker::markToMarket(double last_price) {

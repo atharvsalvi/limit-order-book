@@ -139,11 +139,6 @@ Decision strategy_interface() {
 }
 
 void matching_engine() {
-	
-	// Testing
-	// if(buyHead != NULL) cout << "BUY id=" << buyHead->orderID << " price=" << buyHead->price << " qty=" << buyHead->quantity << "\n";
-	// if(sellHead!= NULL) cout << "SELL id=" << sellHead->orderID << " price=" << sellHead->price << " qty=" << sellHead->quantity << "\n";
-	// cout << endl;
 
 	while((buyHead && sellHead) && (buyHead->price >= sellHead->price)) {
 		int tradeQuantity = min(buyHead->quantity, sellHead->quantity);

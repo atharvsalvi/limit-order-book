@@ -32,6 +32,11 @@ add_executable(quant_run
     src/orderbook.cpp
     src/tradelog.cpp
     src/pnltracker.cpp
+    src/data/parser.cpp
+)
+target_include_directories(quant_run PRIVATE src)
+target_compile_definitions(quant_run PRIVATE 
+    DATA_PATH="${CMAKE_SOURCE_DIR}/src/data/RELIANCE.csv"
 )
 
 # 2. Benchmark Target
