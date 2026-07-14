@@ -1,6 +1,9 @@
 #include<iostream>
 #include "orderbook.h"
 #include "tradelog.h"
+#include <vector>
+#include <cmath>
+#include <numeric>
 using namespace std;
 
 OrderCard* buyHead = nullptr;
@@ -11,6 +14,7 @@ void addSeller(OrderCard* seller, int id, double price, int quantity) {
 	seller->orderID = id;
 	seller->price = price;
 	seller->quantity = quantity;
+	// seller->owner = owner;
 	seller->arriveTime = t;
 	if(sellHead == NULL) {
 		seller->next = NULL;
@@ -57,6 +61,7 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity) {
 	buyer->orderID = id;
 	buyer->price = price;
 	buyer->quantity = quantity;
+	// buyer->owner = owner;
 	buyer->arriveTime = t;
 	if(buyHead == NULL) {
 		buyer->next = NULL;
@@ -98,45 +103,45 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity) {
 	}
 }
 
-Decision strategy_interface() {
+// Decision strategy_interface() {
 
-	double ask_price;
-	bool ask = false;
+// 	double ask_price;
+// 	bool ask = false;
 
-	double bid_price;
-	bool bid = false;
+// 	double bid_price;
+// 	bool bid = false;
 
-	double last_trade_price;
-	bool last_trade = false;
+// 	double last_trade_price = 0.0;
+// 	bool last_trade = false;
 
-	Decision signal = HOLD;
+// 	Decision signal = HOLD;
 
-	if(tradeLog.size() != 0) {
-		last_trade = true;
-		last_trade_price = tradeLog.back().price;
-	}
+// 	if(tradeLog.size() != 0) {
+// 		last_trade = true;
+// 		last_trade_price = tradeLog.back().price;
+// 	}
 
-	if(sellHead) {
-		ask = true;
-		ask_price = sellHead->price;
-	}
-	if(buyHead) {
-		bid = true;
-		bid_price = buyHead->price;
-	}
+// 	if(sellHead) {
+// 		ask = true;
+// 		ask_price = sellHead->price;
+// 	}
+// 	if(buyHead) {
+// 		bid = true;
+// 		bid_price = buyHead->price;
+// 	}
 
-	if(ask && bid) {
-		double mid = (ask_price + bid_price)/2;
-		if(!last_trade) signal = HOLD;
-		else {
-			if(mid == last_trade_price) signal = HOLD;
-			else if(mid > last_trade_price) signal = BUY;
-			else signal = SELL;
-		}
-	}
-	return signal;
+// 	if(ask && bid) {
+// 		double mid = (ask_price + bid_price)/2;
+// 		if(!last_trade) signal = HOLD;
+// 		else {
+// 			if(mid == last_trade_price) signal = HOLD;
+// 			else if(mid > last_trade_price) signal = SELL;
+// 			else signal = BUY;
+// 		}
+// 	}
+// 	return signal;
 
-}
+// }
 
 void matching_engine() {
 
@@ -146,9 +151,12 @@ void matching_engine() {
 		buyHead->quantity -= tradeQuantity;
 		sellHead->quantity -= tradeQuantity;
 
-		cout << buyHead->arriveTime << " " << sellHead->arriveTime<<endl;
-		if(buyHead->arriveTime > sellHead->arriveTime) tradeLog.push_back({sellHead->price, 'B', tradeQuantity, t});
-		else tradeLog.push_back({buyHead->price, 'S', tradeQuantity, t});
+		if(buyHead->arriveTime > sellHead->arriveTime) {
+			tradeLog.push_back({sellHead->price, 'B', tradeQuantity, t});
+		}
+		else {
+			tradeLog.push_back({buyHead->price, 'S', tradeQuantity, t});
+		}
 
 		if(buyHead->quantity == 0) {
 			OrderCard* buyTemp = buyHead;
