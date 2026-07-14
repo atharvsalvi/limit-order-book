@@ -12,38 +12,29 @@ using namespace std;
 int t = 0;
 // MeanReversionStrategy strategy;
 
-struct ManualOrder {
-    char side;
-    double price;
-    int qty;
-};
-
-vector<ManualOrder> orders = {
-    {'B', 182.50, 1},
-    {'S', 183.00, 1},
-    {'B', 184.00, 1},
-    {'S', 182.00, 1},
-    // add more test cases here
-};
-
 int main() {
 
 	OrderLogger logger("trade_log.txt");
 
 	if (logger.exists()) {
 		std::cout << "Found existing trade_log.txt — replaying to rebuild book state...\n";
-		t = logger.replay();
+		vector<RecoveredOrder> temp = logger.replay();
+
+		for(auto it : temp) {
+			if(it.side == 'S') {
+				addSeller(new OrderCard(), t++, it.price, it.qty);
+			}
+			else {
+				addBuyer(new OrderCard(), t++, it.price, it.qty);
+			}
+			matching_engine();
+		}
+
 		std::cout << "Replay complete. Resuming from t=" << t << "\n";
 	}
 	logger.openForAppend();
 
-
-	// auto candles = loadCSV(DATA_PATH);
-
-	// auto start = std::chrono::high_resolution_clock::now();
-
 	int choice;
-
 	do {
 
 		cout << "Select an option\n";
@@ -91,31 +82,5 @@ int main() {
 			}
 		}
 	}while(choice != 5);
-
-	// for (auto& o : orders) {
-	// 	logger.logOrder(o.side, t, o.price, o.qty);
-	// 	if (o.side == 'B')
-	// 		addBuyer(new OrderCard(), t++, o.price, o.qty);
-	// 	else
-	// 		addSeller(new OrderCard(), t++, o.price, o.qty);
-
-	// 	matching_engine();
-	// }
-
-	// auto end = std::chrono::high_resolution_clock::now();
-	// auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-	// for(OrderCard* t = buyHead; t; t = t->next) cout << "BUY id=" << t->orderID <<" price=" << t->price << " qty=" << t->quantity << "\n";
-	// for(OrderCard* t = sellHead; t; t = t->next) cout << "SELL id=" << t->orderID <<" price=" << t->price << " qty=" << t->quantity << "\n";
-
-	// // for(auto it : tradeLog) {
-	// // 	cout << "Side=" << it.side << " Price= "<< it.price << "\n";
-	// // }
-
-	// printTradeLog();
-
-	// cout << "\nCandles processed: " << orders.size() - 1 << endl;
-	// cout << "Total time:        " << duration.count() << " us" << endl;
-	// cout << "Avg latency/tick:  " << (double)duration.count() / (orders.size() - 1) << " us" << endl;
 
 }

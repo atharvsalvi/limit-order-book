@@ -7,6 +7,13 @@
 
 using namespace std;
 
+struct RecoveredOrder {
+    char side;
+    int id;
+    double price;
+    int qty;
+};
+
 class OrderLogger {
     private:
         std::ofstream logFile;
@@ -19,36 +26,42 @@ class OrderLogger {
             return std::filesystem::exists(logPath);
         }
 
-        int replay() {
+        vector<RecoveredOrder> replay() {
+            std::vector<RecoveredOrder> recovered_orders;
             std::ifstream in(logPath);
             std::string line;
-            int lastID = -1;
 
             while (std::getline(in, line)) {
-                std::stringstream ss(line);
-                std::string side, idStr, priceStr, qtyStr;
+                // FIX: Skip empty lines to prevent std::stoi crashes
+                if (line.empty() || line.find_first_not_of(" \t\r\n") == std::string::npos) {
+                    continue; 
+                }
 
-                std::getline(ss, side, ',');
+                std::stringstream ss(line);
+                std::string sideStr, idStr, priceStr, qtyStr;
+
+                std::getline(ss, sideStr, ',');
                 std::getline(ss, idStr, ',');
                 std::getline(ss, priceStr, ',');
                 std::getline(ss, qtyStr, ',');
 
-                int id = std::stoi(idStr);
-                double price = std::stod(priceStr);
-                int qty = std::stoi(qtyStr);
-                lastID = std::max(lastID, id);
-
-                OrderCard* order = new OrderCard();
-                if (side == "B")
-                    addBuyer(order, id, price, qty);
-                else
-                    addSeller(order, id, price, qty);
-
-                matching_engine();
+                try {
+                    RecoveredOrder order;
+                    order.side = sideStr[0]; // Assuming side is 'B' or 'S'
+                    order.id = std::stoi(idStr);
+                    order.price = std::stod(priceStr);
+                    order.qty = std::stoi(qtyStr);
+                    
+                    recovered_orders.push_back(order);
+                } 
+                catch (const std::exception& e) {
+                    std::cerr << "WAL Parsing Error on line: " << line << "\n";
+                    // Decide if you want to continue or halt on a corrupted WAL line
+                }
             }
 
             in.close();
-            return lastID + 1;
+            return recovered_orders;
         }
 
         void openForAppend() {
