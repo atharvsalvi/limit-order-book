@@ -31,9 +31,7 @@ add_executable(quant_run
     src/main.cpp
     src/orderbook.cpp
     src/tradelog.cpp
-    src/pnltracker.cpp
     src/data/parser.cpp
-    src/strategy.cpp
 )
 target_include_directories(quant_run PRIVATE src)
 target_compile_definitions(quant_run PRIVATE 
