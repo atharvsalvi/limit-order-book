@@ -10,7 +10,6 @@
 using namespace std;
 
 int t = 0;
-// MeanReversionStrategy strategy;
 
 int main() {
 
@@ -78,6 +77,24 @@ int main() {
 			}
 			case 4 : {
 				printTradeLog();
+				break;
+			}
+			case 5 : {
+				cout << "Shutting down... cleaning up memory.\n";
+
+				OrderCard* current = buyHead;
+				while (current != nullptr) {
+					OrderCard* nextCard = current->next;
+					delete current;
+					current = nextCard;
+				}
+
+				current = sellHead;
+				while (current != nullptr) {
+					OrderCard* nextCard = current->next;
+					delete current;
+					current = nextCard;
+				}
 				break;
 			}
 		}
