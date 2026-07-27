@@ -35,7 +35,7 @@ add_executable(quant_run
 )
 target_include_directories(quant_run PRIVATE src)
 target_compile_definitions(quant_run PRIVATE 
-    DATA_PATH="${CMAKE_SOURCE_DIR}/src/data/RELIANCE.csv"
+    DATA_PATH="${CMAKE_SOURCE_DIR}/src/data/simulation_input.csv"
 )
 
 # 2. Benchmark Target

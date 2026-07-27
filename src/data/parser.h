@@ -9,4 +9,4 @@ struct Candle {
     int volume;
 };
 
-vector<Candle> loadCSV(const string& path);
+vector<Candle> run_simulation(const string& path);

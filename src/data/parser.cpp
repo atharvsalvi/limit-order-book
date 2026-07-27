@@ -2,31 +2,45 @@
 #include <sstream>
 #include <vector>
 #include "parser.h"
+#include "orderbook.h"
+#include <iostream>
+#include <chrono>
+#include <thread>
 using namespace std;
 
-vector<Candle> loadCSV(const string& path) {
+vector<Candle> run_simulation(const string& path) {
     vector<Candle> data;
     ifstream file(path);
     string line;
-    getline(file, line); // skip header
+    // getline(file, line);
     while(getline(file, line)) {
+
+        line = line.substr(1, line.size() - 2);
+
         stringstream ss(line);
-        Candle c;
-        string symbol, series, prev_close, last, vwap, turnover, trades, deliv, deliv_pct;
-        
-        getline(ss, c.date,    ',');
-        getline(ss, symbol,    ',');
-        getline(ss, series,    ',');
-        getline(ss, prev_close,',');
-        ss >> c.open;  ss.ignore();
-        ss >> c.high;  ss.ignore();
-        ss >> c.low;   ss.ignore();
-        getline(ss, last,      ',');
-        ss >> c.close; ss.ignore();
-        getline(ss, vwap,      ',');
-        ss >> c.volume;
-    
-        data.push_back(c);
+        string cmd;
+
+        getline(ss,cmd,',');
+
+        if (cmd == "ADD") {
+            string idStr, side, qtyStr, priceStr;
+            getline(ss, idStr, ',');
+            getline(ss, side, ',');
+            getline(ss, qtyStr, ',');
+            getline(ss, priceStr, ',');
+            long id = stol(idStr);
+            long qty = stol(qtyStr);
+            double price = stod(priceStr);
+            if (side == "BUY") addBuyer(new OrderCard, id, price, qty, chrono::system_clock::now());
+            else addSeller(new OrderCard, id, price, qty, chrono::system_clock::now());
+        } else if (cmd == "CANCEL") {
+            string idStr; getline(ss, idStr, ',');
+            cancel_order(stol(idStr));
+        }
+
+        this_thread::sleep_for(std::chrono::seconds(1));
+
+        // cout << cmd <<endl;
     }
     return data;
 }

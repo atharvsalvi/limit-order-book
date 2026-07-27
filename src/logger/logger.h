@@ -3,14 +3,17 @@
 #include <sstream>
 #include <filesystem>
 #include <iostream>
-
+#include <chrono>
 using namespace std;
+
+using TimePoint = chrono::system_clock::time_point;
 
 struct RecoveredOrder {
     char side;
     int id;
     double price;
     int qty;
+    TimePoint arrivalTime;
 };
 
 class OrderLogger {
@@ -37,12 +40,15 @@ class OrderLogger {
                 }
 
                 std::stringstream ss(line);
-                std::string sideStr, idStr, priceStr, qtyStr;
+                std::string sideStr, idStr, priceStr, qtyStr, arrTime;
 
                 std::getline(ss, sideStr, ',');
                 std::getline(ss, idStr, ',');
                 std::getline(ss, priceStr, ',');
                 std::getline(ss, qtyStr, ',');
+                std::getline(ss, arrTime, ',');
+
+                long long ns = std::stoll(arrTime);
 
                 try {
                     RecoveredOrder order;
@@ -50,6 +56,7 @@ class OrderLogger {
                     order.id = std::stoi(idStr);
                     order.price = std::stod(priceStr);
                     order.qty = std::stoi(qtyStr);
+                    order.arrivalTime = TimePoint(chrono::nanoseconds(ns));
                     
                     recovered_orders.push_back(order);
                 } 

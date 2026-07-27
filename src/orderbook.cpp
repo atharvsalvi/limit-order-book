@@ -4,18 +4,21 @@
 #include <vector>
 #include <cmath>
 #include <numeric>
+#include <chrono>
 using namespace std;
+
+using TimePoint = std::chrono::system_clock::time_point;
 
 OrderCard* buyHead = nullptr;
 OrderCard* sellHead = nullptr;
 
-void addSeller(OrderCard* seller, int id, double price, int quantity) {
+void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint now) {
 	seller->prev = NULL;
 	seller->orderID = id;
 	seller->price = price;
 	seller->quantity = quantity;
 	// seller->owner = owner;
-	seller->arriveTime = t;
+	seller->arriveTime = now;
 	if(sellHead == NULL) {
 		seller->next = NULL;
 		sellHead = seller;
@@ -54,15 +57,16 @@ void addSeller(OrderCard* seller, int id, double price, int quantity) {
 		seller->prev = temp;
 		temp->next = seller;
 	}
+	matching_engine();
 }
 
-void addBuyer(OrderCard* buyer, int id, double price, int quantity) {
+void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint now) {
 	buyer->prev = NULL;
 	buyer->orderID = id;
 	buyer->price = price;
 	buyer->quantity = quantity;
 	// buyer->owner = owner;
-	buyer->arriveTime = t;
+	buyer->arriveTime = now;
 	if(buyHead == NULL) {
 		buyer->next = NULL;
 		buyHead = buyer;
@@ -101,6 +105,7 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity) {
 		buyer->prev = temp;
 		temp->next = buyer;
 	}
+	matching_engine();
 }
 
 // Decision strategy_interface() {
@@ -152,10 +157,10 @@ void matching_engine() {
 		sellHead->quantity -= tradeQuantity;
 
 		if(buyHead->arriveTime > sellHead->arriveTime) {
-			tradeLog.push_back({sellHead->price, 'B', tradeQuantity, t});
+			tradeLog.push_back({sellHead->price, 'B', tradeQuantity, chrono::system_clock::now()});
 		}
 		else {
-			tradeLog.push_back({buyHead->price, 'S', tradeQuantity, t});
+			tradeLog.push_back({buyHead->price, 'S', tradeQuantity, chrono::system_clock::now()});
 		}
 
 		if(buyHead->quantity == 0) {

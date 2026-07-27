@@ -1,4 +1,7 @@
 #pragma once
+#include<chrono>
+
+using TimePoint = std::chrono::system_clock::time_point;
 
 // enum Owner { STRATEGY, LIQUIDITY };
 
@@ -7,7 +10,7 @@ class OrderCard {
 		int orderID;
 		double price;
 		int quantity;
-		int arriveTime;
+		TimePoint arriveTime;
 		// Owner owner;
 		OrderCard* prev;
 		OrderCard* next;
