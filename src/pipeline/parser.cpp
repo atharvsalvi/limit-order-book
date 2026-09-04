@@ -3,6 +3,7 @@
 #include <vector>
 #include "parser.h"
 #include "orderbook.h"
+#include "tui.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -33,9 +34,11 @@ vector<Candle> run_simulation(const string& path) {
             double price = stod(priceStr);
             if (side == "BUY") addBuyer(new OrderCard, id, price, qty, chrono::system_clock::now());
             else addSeller(new OrderCard, id, price, qty, chrono::system_clock::now());
+            refreshBook();
         } else if (cmd == "CANCEL") {
             string idStr; getline(ss, idStr, ',');
             cancel_order(stol(idStr));
+            refreshBook();
         }
 
         this_thread::sleep_for(std::chrono::seconds(1));

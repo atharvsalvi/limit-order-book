@@ -3,11 +3,13 @@
 #include <chrono>
 #include "orderbook.h"
 #include "tradelog.h"
-#include "data/parser.h"
+#include "pipeline/parser.h"
 #include "logger/logger.h"
 #include "dashboard.h"
 #include "publisher.h"
 #include "thread"
+#include "tui.h"
+#include <thread>
 // #include "strategy.h"
 // #include "pnltracker.h"
 using namespace std;
@@ -15,10 +17,7 @@ using namespace std;
 int t = 0;
 bool isReplaying = true;
 
-int main() {   
-
-	std::thread driver(publisherWorker);
-    driver.detach();
+int main() { 
 
 	OrderLogger logger("trade_log.txt");
 
@@ -108,7 +107,15 @@ int main() {
 	// 	}
 	// }while(choice != 5);
 
-	run_simulation(DATA_PATH);
+	std::thread simulationThread([] {
+		run_simulation(DATA_PATH);
+	});
+
+	startTUI();
+
+	if (simulationThread.joinable()) {
+		simulationThread.join();
+	}
 
 	// for(OrderCard* t = buyHead; t; t = t->next) {
 
@@ -122,20 +129,5 @@ int main() {
 	// 	cout << "SELL id=" << t->orderID <<" price=" << t->price << " qty=" << t->quantity << " arrive time=" << put_time(localtime(&tt), "%Y-%m-%d %H:%M:%S") << "\n";
 
 	// }
-
-	auto bids = getBidLevels();
-
-	std::cout << "BUY LEVELS\n";
-
-	for(auto &b : bids)
-	{
-		std::cout
-			<< b.price
-			<< " "
-			<< b.quantity
-			<< '\n';
-	}
-
-	// printTradeLog();
 
 }

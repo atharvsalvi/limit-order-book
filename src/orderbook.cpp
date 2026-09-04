@@ -67,9 +67,6 @@ void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint 
 		}
 	}
 	matching_engine();
-	if(!isReplaying) {
-		updateSnapshotSlide();
-	}
 }
 
 void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint now) {
@@ -123,9 +120,6 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint no
 		}
 	}
 	matching_engine();
-	if(!isReplaying) {
-		updateSnapshotSlide();
-	}
 }
 
 void matching_engine() {
