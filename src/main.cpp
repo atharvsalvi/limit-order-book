@@ -5,13 +5,20 @@
 #include "tradelog.h"
 #include "data/parser.h"
 #include "logger/logger.h"
+#include "dashboard.h"
+#include "publisher.h"
+#include "thread"
 // #include "strategy.h"
 // #include "pnltracker.h"
 using namespace std;
 
 int t = 0;
+bool isReplaying = true;
 
 int main() {   
+
+	std::thread driver(publisherWorker);
+    driver.detach();
 
 	OrderLogger logger("trade_log.txt");
 
@@ -32,6 +39,7 @@ int main() {
 		std::cout << "Replay complete. Resuming from t=" << t << "\n";
 	}
 	logger.openForAppend();
+	isReplaying = false;
 
 	// int choice;
 	// do {
@@ -102,19 +110,32 @@ int main() {
 
 	run_simulation(DATA_PATH);
 
-	for(OrderCard* t = buyHead; t; t = t->next) {
+	// for(OrderCard* t = buyHead; t; t = t->next) {
 
-		time_t tt = chrono::system_clock::to_time_t(t->arriveTime);
-		cout << "BUY id=" << t->orderID <<" price=" << t->price << " qty=" << t->quantity << " arrive time=" << put_time(localtime(&tt), "%Y-%m-%d %H:%M:%S") << "\n";
+	// 	time_t tt = chrono::system_clock::to_time_t(t->arriveTime);
+	// 	cout << "BUY id=" << t->orderID <<" price=" << t->price << " qty=" << t->quantity << " arrive time=" << put_time(localtime(&tt), "%Y-%m-%d %H:%M:%S") << "\n";
 		
+	// }
+	// for(OrderCard* t = sellHead; t; t = t->next) {
+
+	// 	time_t tt = chrono::system_clock::to_time_t(t->arriveTime);
+	// 	cout << "SELL id=" << t->orderID <<" price=" << t->price << " qty=" << t->quantity << " arrive time=" << put_time(localtime(&tt), "%Y-%m-%d %H:%M:%S") << "\n";
+
+	// }
+
+	auto bids = getBidLevels();
+
+	std::cout << "BUY LEVELS\n";
+
+	for(auto &b : bids)
+	{
+		std::cout
+			<< b.price
+			<< " "
+			<< b.quantity
+			<< '\n';
 	}
-	for(OrderCard* t = sellHead; t; t = t->next) {
 
-		time_t tt = chrono::system_clock::to_time_t(t->arriveTime);
-		cout << "SELL id=" << t->orderID <<" price=" << t->price << " qty=" << t->quantity << " arrive time=" << put_time(localtime(&tt), "%Y-%m-%d %H:%M:%S") << "\n";
-
-	}
-
-	printTradeLog();
+	// printTradeLog();
 
 }

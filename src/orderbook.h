@@ -1,6 +1,11 @@
 #pragma once
 #include"order.h"
 #include <string>
+#include <mutex>
+
+extern std::mutex bookMutex;
+
+extern bool isReplaying;
 
 extern OrderCard* buyHead;
 extern OrderCard* sellHead;

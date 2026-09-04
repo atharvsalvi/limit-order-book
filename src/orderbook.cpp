@@ -5,25 +5,32 @@
 #include <cmath>
 #include <numeric>
 #include <chrono>
+#include "publisher.h"
 using namespace std;
 
-using TimePoint = std::chrono::system_clock::time_point;
+mutex bookMutex;
+mutex tradeMutex;
+
+using TimePoint = chrono::system_clock::time_point;
 
 OrderCard* buyHead = nullptr;
 OrderCard* sellHead = nullptr;
 
 void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint now) {
-	seller->prev = NULL;
+
+	lock_guard<std::mutex> lock(bookMutex);
+
+	seller->prev = nullptr;
 	seller->orderID = id;
 	seller->price = price;
 	seller->quantity = quantity;
 	// seller->owner = owner;
 	seller->arriveTime = now;
-	if(sellHead == NULL) {
-		seller->next = NULL;
+	if(sellHead == nullptr) {
+		seller->next = nullptr;
 		sellHead = seller;
 	}
-	else if(sellHead->next == NULL) {
+	else if(sellHead->next == nullptr) {
 		if(sellHead->price > seller->price) {
 			sellHead->prev = seller;
 			seller->next = sellHead;
@@ -32,7 +39,7 @@ void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint 
 		else {
 			seller->prev = sellHead;
 			sellHead->next = seller;
-			seller->next = NULL;
+			seller->next = nullptr;
 		}
 	}
 	else {
@@ -40,38 +47,46 @@ void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint 
 			sellHead->prev = seller;
 			seller->next = sellHead;
 			sellHead = seller;
-			return;
 		}
-		OrderCard* temp = sellHead;
-		while(temp->next != NULL && temp->next->price <= seller->price) {
-			temp = temp->next;
+		else {
+			OrderCard* temp = sellHead;
+			while(temp->next != nullptr && temp->next->price <= seller->price) {
+				temp = temp->next;
+			}
+			if(temp->next == nullptr) {
+				seller->next = nullptr;
+				temp->next = seller;
+				seller->prev = temp;
+			}
+			else {
+				seller->next = temp->next;
+				seller->next->prev = seller;
+				seller->prev = temp;
+				temp->next = seller;
+			}
 		}
-		if(temp->next == NULL) {
-			seller->next = NULL;
-			temp->next = seller;
-			seller->prev = temp;
-			return;
-		}
-		seller->next = temp->next;
-		seller->next->prev = seller;
-		seller->prev = temp;
-		temp->next = seller;
 	}
 	matching_engine();
+	if(!isReplaying) {
+		updateSnapshotSlide();
+	}
 }
 
 void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint now) {
-	buyer->prev = NULL;
+
+	lock_guard<std::mutex> lock(bookMutex);
+
+	buyer->prev = nullptr;
 	buyer->orderID = id;
 	buyer->price = price;
 	buyer->quantity = quantity;
 	// buyer->owner = owner;
 	buyer->arriveTime = now;
-	if(buyHead == NULL) {
-		buyer->next = NULL;
+	if(buyHead == nullptr) {
+		buyer->next = nullptr;
 		buyHead = buyer;
 	}
-	else if(buyHead->next == NULL) {
+	else if(buyHead->next == nullptr) {
 		if(buyHead->price < buyer->price) {
 			buyHead->prev = buyer;
 			buyer->next = buyHead;
@@ -80,7 +95,7 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint no
 		else {
 			buyer->prev = buyHead;
 			buyHead->next = buyer;
-			buyer->next = NULL;
+			buyer->next = nullptr;
 		}
 	}
 	else {
@@ -88,65 +103,30 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint no
 			buyer->next = buyHead;
 			buyHead->prev = buyer;
 			buyHead = buyer;
-			return;
 		}
-		OrderCard* temp = buyHead;
-		while(temp->next != NULL && temp->next->price >= buyer->price) {
-			temp = temp->next;
+		else {
+			OrderCard* temp = buyHead;
+			while(temp->next != nullptr && temp->next->price >= buyer->price) {
+				temp = temp->next;
+			}
+			if(temp->next == nullptr) {
+				buyer->next = nullptr;
+				buyer->prev = temp;
+				temp->next = buyer;
+			}
+			else {
+				buyer->next = temp->next;
+				buyer->next->prev = buyer;
+				buyer->prev = temp;
+				temp->next = buyer;
+			}
 		}
-		if(temp->next == NULL) {
-			buyer->next = NULL;
-			buyer->prev = temp;
-			temp->next = buyer;
-			return;
-		}
-		buyer->next = temp->next;
-		buyer->next->prev = buyer;
-		buyer->prev = temp;
-		temp->next = buyer;
 	}
 	matching_engine();
+	if(!isReplaying) {
+		updateSnapshotSlide();
+	}
 }
-
-// Decision strategy_interface() {
-
-// 	double ask_price;
-// 	bool ask = false;
-
-// 	double bid_price;
-// 	bool bid = false;
-
-// 	double last_trade_price = 0.0;
-// 	bool last_trade = false;
-
-// 	Decision signal = HOLD;
-
-// 	if(tradeLog.size() != 0) {
-// 		last_trade = true;
-// 		last_trade_price = tradeLog.back().price;
-// 	}
-
-// 	if(sellHead) {
-// 		ask = true;
-// 		ask_price = sellHead->price;
-// 	}
-// 	if(buyHead) {
-// 		bid = true;
-// 		bid_price = buyHead->price;
-// 	}
-
-// 	if(ask && bid) {
-// 		double mid = (ask_price + bid_price)/2;
-// 		if(!last_trade) signal = HOLD;
-// 		else {
-// 			if(mid == last_trade_price) signal = HOLD;
-// 			else if(mid > last_trade_price) signal = SELL;
-// 			else signal = BUY;
-// 		}
-// 	}
-// 	return signal;
-
-// }
 
 void matching_engine() {
 
@@ -157,54 +137,55 @@ void matching_engine() {
 		sellHead->quantity -= tradeQuantity;
 
 		if(buyHead->arriveTime > sellHead->arriveTime) {
+			lock_guard lock(tradeMutex);
 			tradeLog.push_back({sellHead->price, 'B', tradeQuantity, chrono::system_clock::now()});
 		}
 		else {
+			lock_guard lock(tradeMutex);
 			tradeLog.push_back({buyHead->price, 'S', tradeQuantity, chrono::system_clock::now()});
 		}
 
 		if(buyHead->quantity == 0) {
 			OrderCard* buyTemp = buyHead;
 			buyHead = buyHead->next;
-			if(buyHead) buyHead->prev = NULL;
+			if(buyHead) buyHead->prev = nullptr;
 			delete(buyTemp);
 		}
 
 		if(sellHead->quantity == 0) {		
 			OrderCard* sellTemp = sellHead;
 			sellHead = sellHead->next;
-			if(sellHead) sellHead->prev = NULL;
+			if(sellHead) sellHead->prev = nullptr;
 			delete(sellTemp);
 		}
-
-		// Testing
-		// cout << "After matching engine"<<endl;
-		// for(OrderCard* t = buyHead; t; t = t->next) cout << "BUY id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
-		// for(OrderCard* t = sellHead; t; t = t->next) cout << "SELL id=" << t->orderID << " price=" << t->price << " qty=" << t->quantity << "\n";
 
 	}
 }
 
 void remove(int orderID, string type) {
+
 	if(type == "BUY") {
 		OrderCard* head = buyHead;
-		if(head->next == NULL) {
-			buyHead = NULL;
-			delete(head);
+		if(head == nullptr) return;
+		if(head->next == nullptr) {
+			if (head->orderID == orderID) {
+				buyHead = nullptr;
+				delete head;
+			}
 			return;
 		}
 		while(head) {
 			if(head->orderID == orderID) {
-				if(head->prev == NULL) {
+				if(head->prev == nullptr) {
 					buyHead = buyHead->next;
-					buyHead->prev = NULL;
-					head->next = NULL;
+					buyHead->prev = nullptr;
+					head->next = nullptr;
 					break;
 				}
-				else if(head->next == NULL) {
+				else if(head->next == nullptr) {
 					OrderCard* temp = head->prev;
-					temp->next = NULL;
-					head->prev = NULL;
+					temp->next = nullptr;
+					head->prev = nullptr;
 					break;
 				}
 				else {
@@ -212,8 +193,8 @@ void remove(int orderID, string type) {
 					OrderCard* next = head->next;
 					previous->next = next;
 					next->prev = previous;
-					head->prev = NULL;
-					head->next = NULL;
+					head->prev = nullptr;
+					head->next = nullptr;
 					break;
 				}
 			}
@@ -223,23 +204,26 @@ void remove(int orderID, string type) {
 	}
 	else {
 		OrderCard* head = sellHead;
-		if(head->next == NULL) {
-			sellHead = NULL;
-			delete(head);
+		if(head == nullptr) return;
+		if(head->next == nullptr) {
+			if (head->orderID == orderID) {
+				sellHead = nullptr;
+				delete head;
+			}
 			return;
 		}
 		while(head) {
 			if(head->orderID == orderID) {
-				if(head->prev == NULL) {
+				if(head->prev == nullptr) {
 					sellHead = sellHead->next;
-					sellHead->prev = NULL;
-					head->next = NULL;
+					sellHead->prev = nullptr;
+					head->next = nullptr;
 					break;
 				}
-				else if(head->next == NULL) {
+				else if(head->next == nullptr) {
 					OrderCard* temp = head->prev;
-					temp->next = NULL;
-					head->prev = NULL;
+					temp->next = nullptr;
+					head->prev = nullptr;
 					break;
 				}
 				else {
@@ -247,8 +231,8 @@ void remove(int orderID, string type) {
 					OrderCard* next = head->next;
 					previous->next = next;
 					next->prev = previous;
-					head->prev = NULL;
-					head->next = NULL;
+					head->prev = nullptr;
+					head->next = nullptr;
 					break;
 				}
 			}
@@ -259,6 +243,9 @@ void remove(int orderID, string type) {
 }
 
 void cancel_order(int orderID) {
+
+	lock_guard<std::mutex> lock(bookMutex);
+
 	OrderCard* temp = buyHead;
 	bool flag = false;
 	while(temp) {
@@ -280,7 +267,5 @@ void cancel_order(int orderID) {
 		temp = temp->next;
 	}
 	if(flag) return;
-	cout << "Order ID '" <<orderID<< "' does not exist!" <<endl;
-	cout << endl;
 }
 
