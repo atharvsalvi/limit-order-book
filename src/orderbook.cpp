@@ -6,6 +6,7 @@
 #include <numeric>
 #include <chrono>
 #include "publisher.h"
+#include "logger/logger.h"
 using namespace std;
 
 mutex bookMutex;
@@ -19,6 +20,8 @@ OrderCard* sellHead = nullptr;
 void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint now) {
 
 	lock_guard<std::mutex> lock(bookMutex);
+
+	logger.logOrder('S', id, price, quantity, now);
 
 	seller->prev = nullptr;
 	seller->orderID = id;
@@ -72,6 +75,8 @@ void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint 
 void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint now) {
 
 	lock_guard<std::mutex> lock(bookMutex);
+
+	logger.logOrder('B', id, price, quantity, now);
 
 	buyer->prev = nullptr;
 	buyer->orderID = id;
@@ -239,6 +244,8 @@ void remove(int orderID, string type) {
 void cancel_order(int orderID) {
 
 	lock_guard<std::mutex> lock(bookMutex);
+
+	logger.logOrder('C', orderID, 00, 00, chrono::system_clock::now());
 
 	OrderCard* temp = buyHead;
 	bool flag = false;

@@ -57,6 +57,7 @@ add_executable(quant_run
     src/pipeline/parser.cpp
     src/tui.cpp
     src/dashboard.cpp
+    src/logger/logger.cpp
 )
 
 target_include_directories(quant_run PRIVATE src)

@@ -41,9 +41,7 @@ vector<Candle> run_simulation(const string& path) {
             refreshBook();
         }
 
-        this_thread::sleep_for(std::chrono::seconds(1));
-
-        // cout << cmd <<endl;
+        this_thread::sleep_for(std::chrono::seconds(2));
     }
     return data;
 }

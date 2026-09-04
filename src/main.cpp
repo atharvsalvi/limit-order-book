@@ -10,16 +10,12 @@
 #include "thread"
 #include "tui.h"
 #include <thread>
-// #include "strategy.h"
-// #include "pnltracker.h"
 using namespace std;
 
 int t = 0;
 bool isReplaying = true;
 
 int main() { 
-
-	OrderLogger logger("trade_log.txt");
 
 	if (logger.exists()) {
 		std::cout << "Found existing trade_log.txt — replaying to rebuild book state...\n";
@@ -29,8 +25,11 @@ int main() {
 			if(it.side == 'S') {
 				addSeller(new OrderCard(), t++, it.price, it.qty, it.arrivalTime);
 			}
-			else {
+			else if(it.side == 'B') {
 				addBuyer(new OrderCard(), t++, it.price, it.qty, it.arrivalTime);
+			}
+			else {
+				cancel_order(it.id);
 			}
 			matching_engine();
 		}

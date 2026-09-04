@@ -74,8 +74,8 @@ class OrderLogger {
             logFile.open(logPath, std::ios::app);
         }
 
-        void logOrder(char side, int id, double price, int qty) {
-            logFile << side << "," << id << "," << price << "," << qty << "\n";
+        void logOrder(char side, int id, double price, int qty, TimePoint now) {
+            logFile << side << "," << id << "," << price << "," << qty << "," << std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count() << "\n";
             logFile.flush();
         }
 
@@ -83,3 +83,5 @@ class OrderLogger {
             if (logFile.is_open()) logFile.close();
         }
 };
+
+extern OrderLogger logger;
