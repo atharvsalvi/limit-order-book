@@ -1,6 +1,9 @@
 #pragma once
 #include<chrono>
 
+#include "tradelog/tradelog.h"
+#include "logger/logger.h"
+
 using TimePoint = std::chrono::system_clock::time_point;
 
 // enum Owner { STRATEGY, LIQUIDITY };

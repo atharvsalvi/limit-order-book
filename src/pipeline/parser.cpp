@@ -1,47 +1,102 @@
-#include <fstream>
-#include <sstream>
-#include <vector>
 #include "parser.h"
-#include "orderbook.h"
-#include "tui.h"
-#include <iostream>
-#include <chrono>
-#include <thread>
-using namespace std;
 
-vector<Candle> run_simulation(const string& path) {
-    vector<Candle> data;
-    ifstream file(path);
-    string line;
-    // getline(file, line);
-    while(getline(file, line)) {
+std::optional<MarketEvent>
+CSVParser::parse_line(const std::string& line) const {
 
-        line = line.substr(1, line.size() - 2);
+    if (line.empty()) {
+        return std::nullopt;
+    }
 
-        stringstream ss(line);
-        string cmd;
+    std::string clean_line = line;
 
-        getline(ss,cmd,',');
+    // Remove surrounding quotes if they exist.
+    if (clean_line.size() >= 2 &&
+        clean_line.front() == '"' &&
+        clean_line.back() == '"') {
 
-        if (cmd == "ADD") {
-            string idStr, side, qtyStr, priceStr;
-            getline(ss, idStr, ',');
-            getline(ss, side, ',');
-            getline(ss, qtyStr, ',');
-            getline(ss, priceStr, ',');
-            long id = stol(idStr);
-            long qty = stol(qtyStr);
-            double price = stod(priceStr);
-            if (side == "BUY") addBuyer(new OrderCard, id, price, qty, chrono::system_clock::now());
-            else addSeller(new OrderCard, id, price, qty, chrono::system_clock::now());
-            refreshBook();
-        } else if (cmd == "CANCEL") {
-            string idStr; getline(ss, idStr, ',');
-            cancel_order(stol(idStr));
-            refreshBook();
+        clean_line = clean_line.substr(
+            1,
+            clean_line.size() - 2
+        );
+    }
+
+    std::stringstream ss(clean_line);
+
+    std::string command;
+
+    if (!std::getline(ss, command, ',')) {
+        return std::nullopt;
+    }
+
+    try {
+
+        // -------------------------
+        // ADD
+        // -------------------------
+        if (command == "ADD") {
+
+            std::string id_str;
+            std::string side_str;
+            std::string quantity_str;
+            std::string price_str;
+
+            if (!std::getline(ss, id_str, ',') ||
+                !std::getline(ss, side_str, ',') ||
+                !std::getline(ss, quantity_str, ',') ||
+                !std::getline(ss, price_str, ',')) {
+
+                return std::nullopt;
+            }
+
+            MarketEvent event;
+
+            event.type = EventType::ADD;
+            event.id = std::stol(id_str);
+            event.quantity = std::stol(quantity_str);
+            event.price = std::stod(price_str);
+
+            if (side_str == "BUY") {
+                event.side = Side::BUY;
+            }
+            else if (side_str == "SELL") {
+                event.side = Side::SELL;
+            }
+            else {
+                return std::nullopt;
+            }
+
+            event.timestamp =
+                std::chrono::system_clock::now();
+
+            return event;
         }
 
-        this_thread::sleep_for(std::chrono::seconds(2));
+        // -------------------------
+        // CANCEL
+        // -------------------------
+        if (command == "CANCEL") {
+
+            std::string id_str;
+
+            if (!std::getline(ss, id_str, ',')) {
+                return std::nullopt;
+            }
+
+            MarketEvent event;
+
+            event.type = EventType::CANCEL;
+            event.id = std::stol(id_str);
+
+            event.timestamp =
+                std::chrono::system_clock::now();
+
+            return event;
+        }
+
     }
-    return data;
+    catch (const std::exception&) {
+        return std::nullopt;
+    }
+
+    return std::nullopt;
 }

@@ -52,18 +52,19 @@ FetchContent_MakeAvailable(
 # ============================================================
 add_executable(quant_run
     src/main.cpp
-    src/orderbook.cpp
-    src/tradelog.cpp
+    src/engine/orderbook.cpp
+    src/tradelog/tradelog.cpp
     src/pipeline/parser.cpp
-    src/tui.cpp
-    src/dashboard.cpp
+    src/ui/tui.cpp
+    src/ui/dashboard.cpp
     src/logger/logger.cpp
+    src/pipeline/simulation.cpp
 )
 
 target_include_directories(quant_run PRIVATE src)
 
 target_compile_definitions(quant_run PRIVATE
-    DATA_PATH="${CMAKE_SOURCE_DIR}/src/pipeline/simulation_input.csv"
+    DATA_PATH="${CMAKE_SOURCE_DIR}/src/pipeline/data/simulation_input.csv"
 )
 
 # Link FTXUI

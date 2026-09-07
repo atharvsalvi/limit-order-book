@@ -1,12 +1,13 @@
 #pragma once
-#include <vector>
+
+#include <optional>
 #include <string>
-using namespace std;
+#include <sstream>
+#include <stdexcept>
 
-struct Candle {
-    string date;
-    double open, high, low, close;
-    int volume;
+#include "marketevent.h"
+
+class CSVParser {
+public:
+    std::optional<MarketEvent> parse_line(const std::string& line) const;
 };
-
-vector<Candle> run_simulation(const string& path);

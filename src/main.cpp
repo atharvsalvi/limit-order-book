@@ -1,43 +1,86 @@
 #include <iostream>
-#include <algorithm>
 #include <chrono>
-#include "orderbook.h"
-#include "tradelog.h"
-#include "pipeline/parser.h"
-#include "logger/logger.h"
-#include "dashboard.h"
-#include "publisher.h"
-#include "thread"
-#include "tui.h"
 #include <thread>
+
+#include "engine/orderbook.h"
+#include "tradelog/tradelog.h"
+
+#include "pipeline/parser.h"
+#include "pipeline/simulation.h"
+
+#include "logger/logger.h"
+
+#include "ui/dashboard.h"
+#include "ui/tui.h"
+
 using namespace std;
 
 int t = 0;
 bool isReplaying = true;
 
-int main() { 
+void run_simulation(const std::string& path) {
 
-	if (logger.exists()) {
-		std::cout << "Found existing trade_log.txt — replaying to rebuild book state...\n";
-		vector<RecoveredOrder> temp = logger.replay();
+    std::ifstream file(path);
 
-		for(auto it : temp) {
-			if(it.side == 'S') {
-				addSeller(new OrderCard(), t++, it.price, it.qty, it.arrivalTime);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: "
+                  << path << '\n';
+        return;
+    }
+
+    CSVParser parser;
+    Simulation simulation;
+
+    std::string line;
+
+    while (std::getline(file, line)) {
+
+        auto event = parser.parse_line(line);
+
+        if (!event) {
+            std::cerr << "Skipping invalid line: "
+                      << line << '\n';
+            continue;
+        }
+
+        simulation.process(*event);
+
+		this_thread::sleep_for(std::chrono::seconds(2));
+
+    }
+}
+
+int main(int argc, char* argv[]) { 
+
+	bool useTUI = false;
+
+	if (argc > 1 && std::string(argv[1]) == "--tui") {
+        useTUI = true;
+    }
+
+	if(useTUI) {
+		if (logger.exists()) {
+			std::cout << "Found existing trade_log.txt — replaying to rebuild book state...\n";
+			vector<RecoveredOrder> temp = logger.replay();
+
+			for(auto it : temp) {
+				if(it.side == 'S') {
+					addSeller(new OrderCard(), t++, it.price, it.qty, it.arrivalTime);
+				}
+				else if(it.side == 'B') {
+					addBuyer(new OrderCard(), t++, it.price, it.qty, it.arrivalTime);
+				}
+				else {
+					cancel_order(it.id);
+				}
+				matching_engine();
 			}
-			else if(it.side == 'B') {
-				addBuyer(new OrderCard(), t++, it.price, it.qty, it.arrivalTime);
-			}
-			else {
-				cancel_order(it.id);
-			}
-			matching_engine();
+
+			std::cout << "Replay complete. Resuming from t=" << t << "\n";
 		}
-
-		std::cout << "Replay complete. Resuming from t=" << t << "\n";
-	}
-	logger.openForAppend();
-	isReplaying = false;
+		logger.openForAppend();
+		isReplaying = false;
+	}	
 
 	// int choice;
 	// do {
@@ -110,7 +153,9 @@ int main() {
 		run_simulation(DATA_PATH);
 	});
 
-	startTUI();
+	if(useTUI) {
+		startTUI();
+	}
 
 	if (simulationThread.joinable()) {
 		simulationThread.join();

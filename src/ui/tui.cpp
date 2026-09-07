@@ -1,17 +1,4 @@
 #include "tui.h"
-#include "dashboard.h"
-#include "tradelog.h"
-
-#include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/dom/elements.hpp>
-
-#include <atomic>
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-#include <thread>
-#include <algorithm>
 
 using namespace ftxui;
 
@@ -55,6 +42,19 @@ void startTUI()
 {
     auto localScreen = ScreenInteractive::Fullscreen();
     screen = &localScreen;
+
+    std::thread refreshThread([] {
+        while (running) {
+
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(100)
+            );
+
+            if (screen) {
+                screen->PostEvent(Event::Custom);
+            }
+        }
+    });
 
     auto renderer = Renderer([&] {
 
@@ -233,6 +233,12 @@ void startTUI()
     );
 
     localScreen.Loop(component);
+
+    running = false;
+
+    if (refreshThread.joinable()) {
+        refreshThread.join();
+    }
 
     screen = nullptr;
 }

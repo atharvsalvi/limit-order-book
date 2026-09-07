@@ -1,12 +1,7 @@
 #include<iostream>
+
 #include "orderbook.h"
-#include "tradelog.h"
-#include <vector>
-#include <cmath>
-#include <numeric>
-#include <chrono>
-#include "publisher.h"
-#include "logger/logger.h"
+
 using namespace std;
 
 mutex bookMutex;

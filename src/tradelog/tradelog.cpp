@@ -1,8 +1,4 @@
 #include "tradelog.h"
-#include <iostream>
-#include <algorithm>
-#include <iomanip>
-#include <ctime>
 using namespace std;
 
 vector<Trade> tradeLog;
