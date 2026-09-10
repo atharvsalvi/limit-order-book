@@ -15,3 +15,6 @@ double getBestAsk();
 
 double getSpread();
 double getMidPrice();
+
+int getBidDepth();
+int getAskDepth();

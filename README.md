@@ -66,6 +66,8 @@ The system provides:
 * Best Ask
 * Bid-Ask Spread
 * Mid Price
+* Ask Depth
+* Bid Depth
 * Aggregated quantity at each price level
 
 The mid-price is calculated as:
@@ -78,6 +80,18 @@ The bid-ask spread is:
 
 ```text
 Spread = Best Ask - Best Bid
+```
+
+The ask-depth is:
+
+```text
+Ask Depth = Total orders on ask side.
+```
+
+The bid-depth is:
+
+```text
+Bid Depth = Total orders on bid side.
 ```
 
 ---
@@ -96,6 +110,8 @@ The interface displays:
 * Best ask
 * Spread
 * Mid price
+* Ask depth
+* Bid depth
 * Recent trades
 
 A simplified representation of the interface:
@@ -104,14 +120,15 @@ A simplified representation of the interface:
 ┌─────────────────────────────────────────────────────┐
 │                  LIMIT ORDER BOOK                   │
 ├────────────────────────┬────────────────────────────┤
-│         ASKS            │           BIDS             │
+│         ASKS           │           BIDS             │
 │                        │                            │
 │ QTY          PRICE     │ PRICE          QTY         │
 │ ...          ...       │ ...            ...         │
 │                        │                            │
 ├────────────────────────┴────────────────────────────┤
-│ Best Bid : ...       Best Ask : ...                 │
-│ Spread   : ...       Mid Price: ...                 │
+│ Best Bid  : ...       Best Ask : ..                 │
+│ Spread    : ...       Mid Price: ...                |
+| Ask Depth : ...       Bid Depth: ...                |
 ├─────────────────────────────────────────────────────┤
 │                    RECENT TRADES                    │
 │ PRICE       SIDE       QTY                          │

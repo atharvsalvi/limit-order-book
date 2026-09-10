@@ -66,6 +66,9 @@ void startTUI()
         double spread = getSpread();
         double midPrice = getMidPrice();
 
+        int bidDepth = getBidDepth();
+        int askDepth = getAskDepth();
+
         Elements tradeRows;
 
         tradeRows.push_back(
@@ -173,6 +176,16 @@ void startTUI()
             hbox({
                 text("Mid Price: ") | bold,
                 text(formatPrice(midPrice))
+            }),
+
+            hbox({
+                text("Bid Depth: ") | bold,
+                text(formatQuantity(bidDepth))
+            }),
+
+            hbox({
+                text("Ask Depth: ") | bold,
+                text(formatQuantity(askDepth))
             })
         });
 

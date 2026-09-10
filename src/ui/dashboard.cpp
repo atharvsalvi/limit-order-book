@@ -81,3 +81,31 @@ std::vector<PriceLevel> getAskLevels()
     }
     return levels;
 }
+
+int getBidDepth()
+{
+    auto levels = getBidLevels();
+
+    int depth = 0;
+
+    for (const auto& level : levels)
+    {
+        depth += level.quantity;
+    }
+
+    return depth;
+}
+
+int getAskDepth()
+{
+    auto levels = getAskLevels();
+
+    int depth = 0;
+
+    for (const auto& level : levels)
+    {
+        depth += level.quantity;
+    }
+
+    return depth;
+}
