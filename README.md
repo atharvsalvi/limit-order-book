@@ -82,7 +82,7 @@ The bid-ask spread is:
 Spread = Best Ask - Best Bid
 ```
 
-- **Bid depth** → sum of all resting quantities on the **bid side**.
+**Bid depth** → sum of all resting quantities on the **bid side**.
 
 ```text
 Bids:
@@ -92,7 +92,7 @@ Bids:
 Bid Depth = 20 + 30 = 50
 ```
 
-- **Ask depth** → sum of all resting quantities on the **ask side**.
+**Ask depth** → sum of all resting quantities on the **ask side**.
 
 ```text
 Asks:
