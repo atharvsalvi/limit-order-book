@@ -14,6 +14,8 @@ OrderCard* sellHead = nullptr;
 
 void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint now) {
 
+	if(price <= 0 || quantity <= 0) return;
+
 	lock_guard<std::mutex> lock(bookMutex);
 
 	logger.logOrder('S', id, price, quantity, now);
@@ -68,6 +70,8 @@ void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint 
 }
 
 void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint now) {
+
+	if(price <= 0 || quantity <= 0) return;
 
 	lock_guard<std::mutex> lock(bookMutex);
 
