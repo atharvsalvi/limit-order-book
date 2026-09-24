@@ -21,8 +21,18 @@ class OrderLogger {
     private:
         std::ofstream logFile;
         std::string logPath;
+        bool enabled = true;
 
     public:
+
+        void setEnabled(bool value) {
+            enabled = value;
+        }
+
+        bool isEnabled() const {
+            return enabled;
+        }
+
         OrderLogger(const std::string& path) : logPath(path) {}
         
         bool exists() {
@@ -76,7 +86,20 @@ class OrderLogger {
         }
 
         void logOrder(char side, int id, double price, int qty, TimePoint now) {
-            logFile << side << "," << id << "," << price << "," << qty << "," << std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count() << "\n";
+
+            if (!enabled) {
+                return;
+            }
+
+            logFile << side << ","
+                    << id << ","
+                    << price << ","
+                    << qty << ","
+                    << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        now.time_since_epoch()
+                    ).count()
+                    << "\n";
+
             logFile.flush();
         }
 

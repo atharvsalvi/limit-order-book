@@ -16,7 +16,9 @@ void addSeller(OrderCard* seller, int id, double price, int quantity, TimePoint 
 
 	if(price <= 0 || quantity <= 0) return;
 
-	lock_guard<std::mutex> lock(bookMutex);
+	#ifndef LOB_BENCHMARK_NO_LOCKS
+		lock_guard<std::mutex> lock(bookMutex);
+	#endif
 
 	logger.logOrder('S', id, price, quantity, now);
 
@@ -73,7 +75,9 @@ void addBuyer(OrderCard* buyer, int id, double price, int quantity, TimePoint no
 
 	if(price <= 0 || quantity <= 0) return;
 
-	lock_guard<std::mutex> lock(bookMutex);
+	#ifndef LOB_BENCHMARK_NO_LOCKS
+		lock_guard<std::mutex> lock(bookMutex);
+	#endif
 
 	logger.logOrder('B', id, price, quantity, now);
 
@@ -135,11 +139,15 @@ void matching_engine() {
 		sellHead->quantity -= tradeQuantity;
 
 		if(buyHead->arriveTime > sellHead->arriveTime) {
-			lock_guard lock(tradeMutex);
+			#ifndef LOB_BENCHMARK_NO_LOCKS
+				lock_guard lock(tradeMutex);
+			#endif
 			tradeLog.push_back({sellHead->price, 'B', tradeQuantity, chrono::system_clock::now()});
 		}
 		else {
-			lock_guard lock(tradeMutex);
+			#ifndef LOB_BENCHMARK_NO_LOCKS
+				lock_guard lock(tradeMutex);
+			#endif
 			tradeLog.push_back({buyHead->price, 'S', tradeQuantity, chrono::system_clock::now()});
 		}
 
@@ -242,7 +250,9 @@ void remove(int orderID, string type) {
 
 void cancel_order(int orderID) {
 
-	lock_guard<std::mutex> lock(bookMutex);
+	#ifndef LOB_BENCHMARK_NO_LOCKS
+		lock_guard<std::mutex> lock(bookMutex);
+	#endif
 
 	logger.logOrder('C', orderID, 00, 00, chrono::system_clock::now());
 

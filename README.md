@@ -625,6 +625,362 @@ The matching engine is the central component, while the dashboard and TUI provid
 
 ---
 
+## Performance Benchmarking and Validation
+
+The project now includes a **Google Benchmark** target for measuring the performance of the order book and simulation pipeline.
+
+### Benchmarking Goals
+
+Benchmarking is used to answer two separate questions:
+
+1. **How fast is the system?** — measured using Google Benchmark.
+2. **Where is the CPU time being spent?** — investigated using Linux `perf`.
+
+The workflow used for performance validation is:
+
+```text
+Correctness Tests
+       │
+       ▼
+Google Benchmark
+       │
+       ▼
+CPU Profiling with perf
+       │
+       ▼
+Identify Bottlenecks
+       │
+       ▼
+Isolate Components
+       │
+       ▼
+Benchmark Again
+```
+
+### Benchmark Target
+
+The benchmark executable is:
+
+```text
+build/orderbook_bench
+```
+
+The benchmark source is:
+
+```text
+benchmarks/orderbook_benchmark.cpp
+```
+
+The benchmark target links against Google Benchmark and the core order-book implementation.
+
+### Available Benchmarks
+
+The benchmark suite includes measurements for operations such as:
+
+- `BM_AddBuyer`
+- `BM_AddSeller`
+- `BM_Matching`
+- `BM_PartialFill`
+- `BM_CancelOrder`
+- `Multiple-order insertion`
+- `BM_SimulationReplay`
+
+The simulation replay benchmark processes a fixed input of **5,306 market events** per benchmark iteration.
+
+### Running the Benchmarks
+
+Run all benchmarks:
+
+```bash
+./build/orderbook_bench
+```
+
+Run only the simulation replay benchmark:
+
+```bash
+./build/orderbook_bench \
+    --benchmark_filter=BM_SimulationReplay
+```
+
+Run the simulation replay benchmark with repeated measurements:
+
+```bash
+./build/orderbook_bench \
+    --benchmark_filter=BM_SimulationReplay \
+    --benchmark_repetitions=10
+```
+
+The repeated benchmark is useful because individual measurements can vary due to CPU frequency scaling and other system activity.
+
+### Benchmark Metrics
+
+Google Benchmark reports several useful values.
+
+#### Time
+
+The elapsed time required for one benchmark iteration.
+
+```text
+ns = nanoseconds
+```
+
+For example:
+
+```text
+533559 ns ≈ 0.534 ms
+```
+
+#### CPU
+
+The amount of CPU time consumed by the benchmark iteration.
+
+For CPU-bound work, CPU time and elapsed time are often close.
+
+#### Iterations
+
+The number of times Google Benchmark executes the benchmark during a measurement.
+
+Google Benchmark chooses this automatically to obtain sufficiently stable measurements.
+
+#### Items per Second
+
+The throughput of the benchmark.
+
+For this project:
+
+```text
+items_per_second
+```
+
+represents **market events processed per second**.
+
+For example:
+
+```text
+10.0361 M/s
+```
+
+means approximately:
+
+```text
+10.04 million market events per second
+```
+
+#### Mean
+
+The arithmetic average across repeated benchmark runs.
+
+#### Median
+
+The middle measurement after sorting the repeated runs. It is useful when a few unusually slow runs affect the mean.
+
+#### Standard Deviation
+
+Measures how much the repeated measurements vary around the mean.
+
+#### Coefficient of Variation
+
+The coefficient of variation is:
+
+```text
+CV = (standard deviation / mean) × 100
+```
+
+It gives a relative measure of benchmark variability.
+
+### Initial Simulation Replay Baseline
+
+The first 10-run simulation replay benchmark was measured with the normal logging and mutex paths enabled.
+
+The observed results were approximately:
+
+```text
+Mean time:        1,112,303 ns
+Mean throughput:  4.78695 M events/sec
+Median throughput:4.92283 M events/sec
+CV:               6.46%
+Events/replay:    5,306
+```
+
+This represents the initial performance baseline for the simulation replay workload.
+
+---
+
+## CPU Profiling with Linux `perf`
+
+Linux `perf` is used to determine **where CPU time is being spent** rather than only measuring total execution time.
+
+A profiling run can be started with:
+
+```bash
+perf record -g \
+./build/orderbook_bench \
+--benchmark_filter=BM_SimulationReplay
+```
+
+The collected samples can then be inspected with:
+
+```bash
+perf report
+```
+
+On systems where performance monitoring is restricted, the kernel setting may need to be adjusted for the current session:
+
+```bash
+sudo sysctl -w kernel.perf_event_paranoid=1
+```
+
+The profiling environment may still report warnings about restricted kernel symbols. These warnings do not prevent user-space application profiling when the required performance events are available.
+
+### How `perf` Sampling Works
+
+`perf` periodically samples the program while it is running and records which functions are executing.
+
+For example, if a function appears in a large percentage of samples, that function or its call tree is consuming a significant portion of CPU activity under the measured workload.
+
+The `perf report` output includes:
+
+- **Self** — CPU samples directly attributed to the function.
+- **Children** — samples attributed to the function and work performed by functions it calls.
+
+Therefore, `Children` should not be interpreted as the function's own direct CPU cost.
+
+### Initial Profiling Findings
+
+The initial profile of the simulation replay with logging and mutexes enabled showed significant activity in C++ stream/file-output functions, including:
+
+```text
+std::basic_ofstream
+std::ostream
+std::__ostream_insert
+std::ostream::flush
+```
+
+This corresponds to the order logger performing operations such as:
+
+```cpp
+logFile << ...;
+logFile.flush();
+```
+
+The profile also showed measurable activity in:
+
+```text
+cancel_order()
+addSeller()
+matching_engine()
+addBuyer()
+operator new
+malloc
+free
+pthread_mutex_lock
+pthread_mutex_unlock
+```
+
+Representative `perf` results from this workload included approximately:
+
+```text
+cancel_order()
+    Self:     26.63%
+    Children: 33.68%
+
+addSeller()
+    Self:      7.96%
+    Children: 20.98%
+
+matching_engine()
+    Self:      5.34%
+    Children: 19.51%
+
+addBuyer()
+    Self:      2.54%
+    Children: 14.21%
+```
+
+The report also showed a few percent of sampled activity associated with mutex locking/unlocking and dynamic memory allocation.
+
+These percentages are **workload-specific profiling observations**, not universal performance characteristics of the functions.
+
+---
+
+## Isolating Logger and Mutex Overhead
+
+The initial profile indicated that logging and synchronization could be contributing substantial overhead. Instead of immediately modifying the core data structure, the benchmark was changed to isolate these costs.
+
+The benchmark configuration can disable logging and mutex locking while leaving the normal application configuration unchanged.
+
+### Logger
+
+The `OrderLogger` supports an enabled/disabled mode:
+
+```cpp
+logger.setEnabled(false);
+```
+
+When disabled, `logOrder()` returns without performing file output.
+
+Normal application behavior keeps logging enabled.
+
+### Mutexes
+
+The benchmark uses the compile-time definition:
+
+```text
+LOB_BENCHMARK_NO_LOCKS
+```
+
+When this definition is enabled for the benchmark target, the benchmark does not incur the `bookMutex` and `tradeMutex` locking overhead.
+
+The normal application does not use this benchmark definition and therefore retains its synchronization behavior.
+
+This separation is important because disabling logging and mutexes is a **benchmarking experiment**, not a claim that they should be removed from the production application.
+
+---
+
+## Logger/Mutex Isolation Result
+
+With both logging and benchmark mutex locking disabled, the same 5,306-event simulation replay was measured over 10 repetitions.
+
+The result was approximately:
+
+```text
+Mean time:         533,559 ns
+Mean throughput:   10.0361 M events/sec
+Median time:       499,360 ns
+Median throughput: 10.6259 M events/sec
+Standard deviation:57,455 ns
+CV:                10.77%
+Events/replay:     5,306
+```
+
+Compared with the original baseline:
+
+```text
+                         Original       Logger/Mutex Disabled
+Mean time                1.112 ms       0.534 ms
+Mean throughput          4.79 M/s       10.04 M/s
+```
+
+The isolated configuration achieved approximately **2.1× the throughput** of the original configuration.
+
+This demonstrates that logging and/or mutex synchronization contribute substantial overhead to this single-threaded benchmark workload.
+
+Because both were disabled simultaneously, this experiment does **not** independently quantify the contribution of logging versus mutexes. A separate controlled experiment would be required to isolate each component individually.
+
+### Important Benchmarking Note
+
+The benchmark environment reported:
+
+```text
+CPU scaling is enabled
+```
+
+Therefore, individual runs can vary due to CPU frequency changes and other system activity.
+
+For this reason, repeated measurements, mean/median values, and the coefficient of variation are recorded instead of relying on a single benchmark run.
+
+---
+
 ## Current Limitations
 
 The project is an experimental implementation intended for learning, research, and further development.
