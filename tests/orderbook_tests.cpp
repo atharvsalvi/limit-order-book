@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "engine/orderbook.h"
-#include "tradelog/tradelog.h"
+#include "orderbook.h"
+#include "tradelog.h"
 
 class OrderBookTest : public ::testing::Test {
 protected:

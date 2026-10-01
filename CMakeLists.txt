@@ -71,10 +71,12 @@ add_executable(quant_run
     src/pipeline/simulation.cpp
 )
 
-target_include_directories(quant_run PRIVATE src)
+target_include_directories(quant_run PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
 
 target_compile_definitions(quant_run PRIVATE
-    DATA_PATH="${CMAKE_SOURCE_DIR}/src/pipeline/data/simulation_input.csv"
+    DATA_PATH="${CMAKE_SOURCE_DIR}/data/simulation_input.csv"
 )
 
 # Link FTXUI
@@ -85,33 +87,12 @@ target_link_libraries(quant_run PRIVATE
 )
 
 # ============================================================
-# Benchmark Target
-# ============================================================
-
-add_executable(orderbook_bench
-    benchmarks/orderbook_benchmark.cpp
-
-    src/engine/orderbook.cpp
-    src/tradelog/tradelog.cpp
-    src/logger/logger.cpp
-    src/pipeline/simulation.cpp
-    src/pipeline/parser.cpp
-)
-
-target_include_directories(orderbook_bench PRIVATE
-    src
-)
-
-target_link_libraries(orderbook_bench PRIVATE
-    benchmark::benchmark
-)
-
-target_compile_definitions(orderbook_bench PRIVATE
-    LOB_BENCHMARK_NO_LOCKS
-)
-
-# ============================================================
 # Tests
 # ============================================================
 enable_testing()
 add_subdirectory(tests)
+
+# ============================================================
+# Benchmarks
+# ============================================================
+add_subdirectory(benchmarks)

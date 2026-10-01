@@ -2,16 +2,16 @@
 #include <chrono>
 #include <thread>
 
-#include "engine/orderbook.h"
-#include "tradelog/tradelog.h"
+#include "orderbook.h"
+#include "tradelog.h"
 
-#include "pipeline/parser.h"
-#include "pipeline/simulation.h"
+#include "parser.h"
+#include "simulation.h"
 
-#include "logger/logger.h"
+#include "logger.h"
 
-#include "ui/dashboard.h"
-#include "ui/tui.h"
+#include "dashboard.h"
+#include "tui.h"
 
 using namespace std;
 
@@ -44,8 +44,6 @@ void run_simulation(const std::string& path) {
         }
 
         simulation.process(*event);
-
-		this_thread::sleep_for(std::chrono::seconds(2));
 
     }
 }

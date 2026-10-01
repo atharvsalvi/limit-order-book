@@ -1,8 +1,8 @@
 #pragma once
 #include<chrono>
 
-#include "tradelog/tradelog.h"
-#include "logger/logger.h"
+#include "tradelog.h"
+#include "logger.h"
 
 using TimePoint = std::chrono::system_clock::time_point;
 

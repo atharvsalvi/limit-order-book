@@ -6,7 +6,7 @@ add_executable(orderbook_tests
 )
 
 target_include_directories(orderbook_tests PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/include
 )
 
 target_link_libraries(orderbook_tests PRIVATE

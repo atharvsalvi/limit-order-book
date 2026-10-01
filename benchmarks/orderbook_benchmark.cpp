@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "pipeline/parser.h"
-#include "pipeline/simulation.h"
-#include "engine/orderbook.h"
+#include "parser.h"
+#include "simulation.h"
+#include "orderbook.h"
 
 
 // ============================================================
