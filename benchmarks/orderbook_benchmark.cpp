@@ -348,8 +348,7 @@ static void BM_SimulationReplay(benchmark::State& state)
 
     if (events.empty())
     {
-        const std::string path =
-            "src/pipeline/data/simulation_input.csv";
+        const std::string path = DATA_PATH;
 
         std::ifstream file(path);
 

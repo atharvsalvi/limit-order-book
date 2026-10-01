@@ -45,6 +45,8 @@ void run_simulation(const std::string& path) {
 
         simulation.process(*event);
 
+		this_thread::sleep_for(std::chrono::seconds(1));
+
     }
 }
 

@@ -8,6 +8,10 @@ add_executable(orderbook_bench
     ${CMAKE_SOURCE_DIR}/src/pipeline/parser.cpp
 )
 
+target_compile_definitions(orderbook_bench PRIVATE
+    DATA_PATH="${CMAKE_SOURCE_DIR}/data/simulation_input.csv"
+)
+
 target_include_directories(orderbook_bench PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )

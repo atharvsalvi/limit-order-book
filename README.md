@@ -8,6 +8,8 @@ The project supports a CSV-driven order-flow simulation, limit-order matching, o
 
 ## Overview
 
+![Live Order Book](docs/images/tui.png)
+
 A Limit Order Book maintains outstanding buy and sell orders for a financial instrument.
 
 The book is divided into two sides:
@@ -473,6 +475,10 @@ Contains the infrastructure for preparing order-book snapshots for external publ
 
 The project includes a **GoogleTest** test suite for the core order-book and matching-engine functionality.
 
+![Tests](docs/images/test1.png)
+![Tests](docs/images/test2.png)
+Automated GoogleTest suite validating order-book correctness.
+
 The tests cover:
 
 - Buy and sell order insertion
@@ -628,6 +634,9 @@ The matching engine is the central component, while the dashboard and TUI provid
 ## Performance Benchmarking and Validation
 
 The project now includes a **Google Benchmark** target for measuring the performance of the order book and simulation pipeline.
+
+![Benchmarks](docs/images/benchmarks.png)
+Google Benchmark results for core matching-engine operations.
 
 ### Benchmarking Goals
 
